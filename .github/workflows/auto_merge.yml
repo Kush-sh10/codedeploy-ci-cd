@@ -1,19 +1,16 @@
 name: Auto Merge PR
-
 on:
   pull_request:
-    types: [opened, labeled, synchronize]  # Triggers when a PR is opened or updated
+    types: [opened, synchronize, reopened]
 
 jobs:
-  automerge:
+  auto-merge:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Auto-merge PR
+      - name: Auto merge PR
         uses: peter-evans/auto-merge@v2
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          merge-method: merge  # Can be 'merge', 'squash', or 'rebase'
-          pull-request-number: ${{ github.event.pull_request.number }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
