@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo su 
+
 APP_DIR="/home/ubuntu/myapp"
 
 
