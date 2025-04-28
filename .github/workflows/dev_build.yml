@@ -21,5 +21,25 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-    - name: Run tests
-      run: npm test  # Replace with your test command
+      - name: Run Tests
+        run: npm test
+
+      - name: Create Pull Request to main
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PAT_TOKEN }} # NOT GITHUB_TOKEN
+          branch: dev_branch
+          base: main
+          title: "Auto PR: Dev to Main"
+          body: |
+            Auto-generated PR from dev_branch after successful build.
+
+      - name: Auto Approve and Merge
+        if: steps.cpr.outputs.pull-request-number != ''
+        run: |
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+
