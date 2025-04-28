@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  deploy:
+  deploy-to-dev-and-prod:
     runs-on: ubuntu-latest
 
     steps:
@@ -17,7 +17,7 @@ jobs:
         run: |
           zip -r myapp.zip . -x ".git/*" -x "*.gitignore"
 
-      - name: Upload to S3
+      - name: Upload Artifact to S3
         uses: jakejarvis/s3-sync-action@master
         with:
           args: --acl private
@@ -29,11 +29,36 @@ jobs:
           SOURCE_DIR: "./"
           DEST_DIR: "artifacts/"
 
-      - name: Trigger CodeDeploy
+      - name: Deploy to Dev Environment
         run: |
           aws deploy create-deployment \
             --application-name ${{ secrets.APPLICATION_NAME }} \
-            --deployment-group-name ${{ secrets.DEPLOYMENT_GROUP }} \
+            --deployment-group-name ${{ secrets.DEV_DEPLOYMENT_GROUP }} \
+            --s3-location bucket=${{ secrets.S3_BUCKET }},key=artifacts/myapp.zip,bundleType=zip \
+            --region ${{ secrets.AWS_REGION }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+
+      - name: Wait for Manual Approval to Deploy to Production
+        uses: hmarr/auto-approve-action@v3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Ask for confirmation
+        run: |
+          echo "Do you want to deploy to Production? (yes/no)"
+          read confirm
+          if [ "$confirm" != "yes" ]; then
+            echo "Skipping production deployment."
+            exit 0
+          fi
+
+      - name: Deploy to Production Environment
+        if: success()
+        run: |
+          aws deploy create-deployment \
+            --application-name ${{ secrets.APPLICATION_NAME }} \
+            --deployment-group-name ${{ secrets.PROD_DEPLOYMENT_GROUP }} \
             --s3-location bucket=${{ secrets.S3_BUCKET }},key=artifacts/myapp.zip,bundleType=zip \
             --region ${{ secrets.AWS_REGION }}
         env:
