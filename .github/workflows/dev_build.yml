@@ -41,3 +41,5 @@ jobs:
           gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+
+
