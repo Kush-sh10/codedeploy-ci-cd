@@ -1,25 +1,43 @@
-name: Build and Test
+name: CI Build and Auto PR
 
 on:
   push:
     branches:
-      - dev_branch  # Trigger on push to dev_branch
+      - dev_branch
 
 jobs:
-  build:
+  build-and-pr:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '14'  # Specify your Node.js version
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install Dependencies
+        run: npm install
 
-    - name: Run tests
-      run: npm test  # Replace with your test command
+      - name: Run Tests
+        run: npm test
+
+      - name: Create Pull Request to main
+        id: cpr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.PAT_TOKEN }} # NOT GITHUB_TOKEN
+          branch: dev_branch
+          base: main
+          title: "Auto PR: Dev to Main"
+          body: |
+            Auto-generated PR from dev_branch after successful build.
+
+      - name: Auto Approve and Merge
+        if: steps.cpr.outputs.pull-request-number != ''
+        run: |
+          gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin
+        env:
+          GH_TOKEN: ${{ secrets.PAT_TOKEN }}
