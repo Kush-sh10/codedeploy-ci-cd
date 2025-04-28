@@ -28,7 +28,7 @@ jobs:
         id: cpr
         uses: peter-evans/create-pull-request@v5
         with:
-          token: ${{ secrets.PAT_TOKEN }} # NOT GITHUB_TOKEN
+          token: ${{ secrets.PAT_TOKEN }}
           branch: dev_branch
           base: main
           title: "Auto PR: Dev to Main"
@@ -41,5 +41,3 @@ jobs:
           gh pr merge ${{ steps.cpr.outputs.pull-request-number }} --squash --admin
         env:
           GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-
-
